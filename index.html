@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>turfjs</title>
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.8.1/mapbox-gl.js"></script>
+    <link
+      href="https://api.mapbox.com/mapbox-gl-js/v2.8.1/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rubik&display=swap"
+      rel="stylesheet"
+      type="text/css"
+    />
+
+    <style>
+      body {
+        font-family: "Rubik", sans-serif;
+        font-size: 35;
+        margin: 0;
+        padding: 0;
+        background: #253225;
+      }
+
+      header {
+        padding: 1px 1%;
+      }
+      h1 {
+        margin-top: 3px;
+        margin-bottom: -4px;
+        font-family: "Nanum Pen Script", sans-serif;
+        font-size: 75;
+        display: inline-block;
+        margin-right: 20px;
+        color: #f1f1f1;
+      }
+
+      h4 {
+        margin-top: 8px;
+        margin-bottom: 3;
+        font-family: "Rubik", sans-serif;
+        font-size: 16;
+        display: inline-block;
+        margin-right: 20px;
+        color: #f1f1f1;
+      }
+
+      p {
+        font-family: "Rubik", sans-serif;
+        color: #253225;
+      }
+
+      #map {
+        position: absolute;
+        top: 75px;
+        bottom: 0;
+        width: 100%;
+      }
+    </style>
+    <style>
+      .coordinates {
+        background: rgba(0, 0, 0, 0.5);
+        font-family: "Rubik";
+        color: #fff;
+        position: absolute;
+        bottom: 40px;
+        left: 10px;
+        padding: 5px 10px;
+        margin: 0;
+        font-size: 11px;
+        line-height: 18px;
+        border-radius: 3px;
+        display: none;
+      }
+    </style>
+    <style>
+      .credits {
+        background: rgba(0, 0, 0, 0.5);
+        font-family: "Rubik";
+        color: #fff;
+        position: absolute;
+        bottom: 20px;
+        right: 0px;
+        padding: 5px 10px;
+        margin: 0;
+        font-size: 11px;
+        line-height: 18px;
+        border-radius: 3px;
+        display: none;
+      }
+    </style>
+    <style>
+      #marker {
+        background-image: url("https://cdn-icons-png.flaticon.com/512/2844/2844078.png");
+        background-size: cover;
+        width: 30px;
+        height: 30px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Start planning your next US National Park adventure!</h1>
+      <h4>
+        Drag the van to see how many Bureau of Land Management campgrounds are
+        within 100 miles of the marker. Click on parks and campgrounds for more
+        information.
+      </h4>
+    </header>
+    <div id="map"></div>
+    <pre id="coordinates" class="coordinates"></pre>
+    <pre id="credits" class="credits"></pre>
+    <script type="text/javascript" src="blm_camp.js"></script>
+
+    <script>
+      //access token needed to use the mapbox background layer
+      mapboxgl.accessToken =
+        "pk.eyJ1IjoidGF0ZWthbWlzaCIsImEiOiJja3k3eXoyb3YxNjRrMnBvYXIzcTJzaHZ5In0.RYhXYtWaYqyv96kHj885VA";
+      const coordinates = document.getElementById("coordinates");
+      const map = new mapboxgl.Map({
+        // Creates new map
+        container: "map", // container id in div tag
+        style: "mapbox://styles/tatekamish/cl1uyhsaz002y15s2z7gr5lf4", // stylesheet location - links directly to mapbox
+        center: [-96.261, 38.588],
+        zoom: 3.5,
+      });
+
+      const credits = document.getElementById("credits");
+      credits.style.display = "block";
+      credits.innerHTML = `Map created by: Tate Kamish<br>Data: Bureau of Land Management,<br>National Park Service`;
+
+      mapbox: map.on("load", function () {
+        map.addSource("point-data", {
+          type: "geojson",
+          data: null,
+        });
+
+        map.addLayer({
+          id: "point-layer",
+          type: "fill",
+          source: "point-data",
+          paint: {
+            "fill-color": "yellow",
+            "fill-opacity": 0.25,
+          },
+        });
+
+        map.loadImage(
+          "https://img.icons8.com/pastel-glyph/64/000000/bonfire.png",
+          (error, image) => {
+            if (error) throw error;
+
+            map.addImage("campfire", image);
+
+            map.addSource("blm-data", {
+              type: "geojson",
+              data: null,
+            });
+
+            map.addLayer({
+              id: "blm-layer",
+              type: "symbol",
+              source: "blm-data",
+              layout: {
+                "icon-image": "campfire",
+                "icon-allow-overlap": true,
+                "icon-size": 0.25,
+              },
+            });
+          }
+        );
+      });
+
+      map.on("click", "nat-park", (event) => {
+        const features = map.queryRenderedFeatures(event.point, {
+          layers: ["nat-park"],
+        });
+        if (!features.length) {
+          return;
+        }
+        const feature = features[0];
+
+        const popup = new mapboxgl.Popup({ offset: [0, -15] })
+          .setLngLat(feature.geometry.coordinates)
+          .setHTML(`<p><b>${feature.properties.Name}</p></b>`)
+          .addTo(map);
+      });
+
+      map.on("click", "blm-layer", (event) => {
+        const features = map.queryRenderedFeatures(event.point, {
+          layers: ["blm-layer"],
+        });
+        if (!features.length) {
+          return;
+        }
+        const feature = features[0];
+
+        const popup = new mapboxgl.Popup({ offset: [0, -15] })
+          .setLngLat(feature.geometry.coordinates)
+          .setHTML(
+            `<p><b>Name: </b>${feature.properties.RecAreaName}</p><br>
+                      <p><b>Reservation URL: </b>${feature.properties.RecAreaReservationURL}</p><br>
+                      <p><b>Phone: </b>${feature.properties.RecAreaPhone}</p><br>
+                      <p><b>Email: </b>${feature.properties.RecAreaEmail}</p><br>
+                      <p><b>Stay Limit: </b>${feature.properties.StayLimit}</p><br>
+                      <p><b>Directions: </b>${feature.properties.RecAreaDirections}</p`
+          )
+          .addTo(map);
+      });
+
+      const myicon = {
+        iconUrl: "https://cdn-icons-png.flaticon.com/512/61/61187.png",
+        iconSize: [15, 15], // size of the icon
+        iconAnchor: [25, 25], // point of the icon which will correspond to marker's location
+        popupAnchor: [0, -25], // point from which the popup should open relative to the iconAnchor
+        className: "dot",
+      };
+
+      const car_element = document.createElement("div");
+      car_element.id = "marker";
+      const marker = new mapboxgl.Marker({
+        element: car_element,
+        draggable: true,
+      })
+        .setLngLat([-102.54391834777712, 40.874927470059816])
+        .addTo(map);
+
+      function onDragEnd() {
+        const to = marker.getLngLat();
+        coordinates.style.display = "block";
+        coordinates.innerHTML = `Latitude: ${to.lat} <br>Longitude: ${to.lng}`;
+        var center = [to.lng, to.lat];
+        var radius = 100;
+        var options = {
+          steps: 34,
+          units: "miles",
+        };
+        var circle = turf.circle(center, radius, options);
+        map.getSource("point-data").setData(circle);
+
+        var pts_within = turf.pointsWithinPolygon(blm, circle);
+        map.getSource("blm-data").setData(pts_within);
+      }
+      console.log(blm.features);
+      marker.on("dragend", onDragEnd);
+    </script>
+  </body>
+</html>
