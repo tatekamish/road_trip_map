@@ -1,0 +1,50 @@
+<html>
+  <head>
+    <script
+      type="text/javascript"
+      src="https://www.gstatic.com/charts/loader.js"
+    ></script>
+    <script type="text/javascript">
+      google.charts.load("current", { packages: ["bar"] });
+      google.charts.setOnLoadCallback(drawStuff);
+
+      function drawStuff() {
+        var data = new google.visualization.arrayToDataTable([
+          ["National Park", "Number of Visitors (in Millions)"],
+          ["Blue Ridge Parkway", 15.9],
+          ["Great Smoky Mountains National Park", 14.1],
+          ["Golden Gate National Recreation Area", 13.7],
+          ["Gateway National Recreation Area", 9.1],
+          ["Lake Mead National Recreation Area", 7.6],
+          ["George Washington Memorial Parkway", 6.8],
+          ["Natchez Trace Parkway", 6.4],
+          ["Lincoln Memorial", 5.8],
+          ["Gulf Islands National Seashore", 5.5],
+          ["Zion National Park", 5],
+        ]);
+
+        var options = {
+          title: "Top 10 Most Visited U.S. National Parks in 2021",
+          width: 900,
+          legend: { position: "none" },
+          chart: {
+            title: "Top 10 Most Visited U.S. National Parks in 2021",
+          },
+          bars: "horizontal", // Required for Material Bar Charts.
+          axes: {
+            x: {
+              0: { side: "bottom", label: "Number of Visitors (in Millions)" }, // Top x-axis.
+            },
+          },
+          bar: { groupWidth: "90%" },
+        };
+
+        var chart = new google.charts.Bar(document.getElementById("top_x_div"));
+        chart.draw(data, options);
+      }
+    </script>
+  </head>
+  <body>
+    <div id="top_x_div" style="width: 900px; height: 500px"></div>
+  </body>
+</html>
